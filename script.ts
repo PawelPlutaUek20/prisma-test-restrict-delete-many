@@ -34,12 +34,18 @@ async function main() {
 
   const models = Object.keys(prisma).filter((key) => key[0] !== "_");
 
-  const promises = models.map((name) => {
-    // @ts-expect-error
-    return prisma[name].deleteMany();
-  });
+  // await prisma.$queryRaw`SET session_replication_role = 'replica'`;
+  await prisma.$queryRaw`PRAGMA foreign_keys = OFF`;
 
-  await Promise.all(promises);
+  await Promise.all(
+    models.map((name) => {
+      // @ts-expect-error
+      return prisma[name].deleteMany();
+    })
+  );
+
+  // await prisma.$queryRaw`SET session_replication_role = 'origin'`;
+  await prisma.$queryRaw`PRAGMA foreign_keys = ON`;
 
   const usersAfterDelete = await prisma.user.findMany();
   const postsAfterDelete = await prisma.post.findMany();
